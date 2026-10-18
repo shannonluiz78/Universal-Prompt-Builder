@@ -20,5 +20,7 @@ class handler(BaseHTTPRequestHandler):
         if size<=0 or size>MAX_BODY:return self._reply(413,{'error':'Invalid body size.'})
         origin=self.headers.get('Origin','');host=self.headers.get('Host','')
         if origin and origin!=f'https://{host}':return self._reply(403,{'error':'Cross-origin requests not allowed.'})
-        code,response=process_post(self.rfile.read(size),local=False)
+        bearer=self.headers.get('Authorization','')
+        token=bearer[7:] if bearer.startswith('Bearer ') else ''
+        code,response=process_post(self.rfile.read(size),local=False,auth_token=token)
         self._reply(code,response)
