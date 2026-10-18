@@ -1,4 +1,5 @@
-/* Prompt Builder V1.1 — deterministic, browser/Node compatible intelligence engine.
+import {getApp,getTargetModel,targetGuidance} from './catalog.mjs';
+/* Prompt Builder V1.2 — deterministic, browser/Node compatible intelligence engine.
  * No credentials, network requests, or privileged access here. */
 export const MODES = ['text','image','video','image2video'];
 export const TASKS = ['Research','Writing','Marketing','Analysis','Coding','AI Agent'];
@@ -34,7 +35,7 @@ export const FIELD_OPTIONS = {
  }
 };
 for (const key of MODES) FIELD_OPTIONS[key].language = ['English','简体中文 (Simplified Chinese)'];
-export const EMPTY = {mode:'text',task:'Research',goal:'',rootProblem:'',audience:'',facts:'',constraints:'',success:'',format:'AI recommends',tone:'AI recommends',depth:'Balanced',purpose:'AI recommends',style:'AI recommends',composition:'AI recommends',lighting:'AI recommends',ratio:'AI recommends',motion:'AI recommends',camera:'AI recommends',duration:'AI recommends',audio:'AI recommends',exclusions:'',referenceNotes:'',overlay:'', language:'English',imageName:''};
+export const EMPTY = {mode:'text',task:'Research',goal:'',rootProblem:'',audience:'',facts:'',constraints:'',success:'',format:'AI recommends',tone:'AI recommends',depth:'Balanced',purpose:'AI recommends',style:'AI recommends',composition:'AI recommends',lighting:'AI recommends',ratio:'AI recommends',motion:'AI recommends',camera:'AI recommends',duration:'AI recommends',audio:'AI recommends',exclusions:'',referenceNotes:'',overlay:'', language:'English',imageName:'',targetApp:'universal',targetModel:'universal'};
 export const EXAMPLES = [
  {title:'Property launch post',mode:'text',task:'Marketing',goal:'Create a Facebook post that attracts qualified enquiries for an upcoming condominium launch.',rootProblem:'I need genuinely interested buyers, not generic views.',audience:'Singapore homebuyers',facts:'Project details and verified pricing will be supplied separately.',constraints:'Do not invent launch dates, prices or investment returns.',format:'Social media post'},
  {title:'Marketing image',mode:'image',goal:'A modern condominium living room with floor-to-ceiling windows opening to a green balcony.',purpose:'Property marketing',style:'Photorealistic',composition:'Eye-level wide shot',lighting:'Soft natural daylight',ratio:'4:5',exclusions:'No warped walls or invented project branding.'},
@@ -109,6 +110,8 @@ export function buildPrompt(s,depth=s.depth||'Balanced'){
  const d=String(depth).toLowerCase();const compact=d==='efficient';const detailed=d==='detailed';const lines=[];
  const add=(k,value)=>{if(set(value))lines.push(`${k}: ${normalize(value)}`)};
  if(!str(s.goal))return '';
+ const selectedApp=getApp(s.mode,s.targetApp);const selectedModel=getTargetModel(s.mode,s.targetApp,s.targetModel);
+ if(selectedApp.id!=='universal')lines.push(`TARGET APPLICATION: ${selectedApp.name} — ${selectedModel.name}. This is a prompt adapted for the destination, not a live generation request.`);
  if(s.mode==='text'){
   add('TASK',s.goal);add('REAL PROBLEM TO SOLVE',s.rootProblem);add('FOR',s.audience);add('KNOWN CONTEXT',s.facts);
   add('REQUIREMENTS & RULES',s.constraints);
@@ -134,6 +137,7 @@ export function buildPrompt(s,depth=s.depth||'Balanced'){
   if(s.mode==='image')lines.push('Generate the image only; verify readable typography and spatial consistency.');
   else lines.push('Avoid frame flicker, morphing and abrupt unintended transitions.');
  }
+ const targetNote=targetGuidance(s.mode,selectedApp.id,selectedModel.id);if(targetNote)lines.push(`MODEL-SPECIFIC GUIDANCE: ${targetNote}`);
  add('OUTPUT LANGUAGE',s.language);
  if(detailed)lines.push('FINAL CHECK: Validate every stated constraint and report any unsupported parameters or missing references before proceeding.');
  if(compact)return uniqueLines(lines).join('\n').replace(/^(TASK|CREATE): /m,'');

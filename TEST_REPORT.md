@@ -1,48 +1,24 @@
-# Prompt Builder V1.1 — QA Test Report
+# Prompt Builder V1.2 — Beta Test Report
 
-**Date:** 18 October 2026
+**Built:** 18 October 2026  
+**Environment:** Python 3, Node.js, Chromium via Playwright (restricted test container).  
+**Release status:** Pre-deployment beta. Back up the existing GitHub repo before uploading.
 
-## Test summary
+## Automated checks
 
-| Area | Result | Evidence |
-|---|---|---|
-| Prompt compiler / 4 workflows | PASS | Node engine test suite: Core assertions + 12 starter template scenarios |
-| Root-problem questioning | PASS | Coding/agent gap checks, blueprint generation |
-| Smart Fill and safe Auto-Repair | PASS | Expected defaults; no fabricated user/project facts |
-| Token Saver | PASS | Detailed/Balanced/Efficient output and approximate comparison |
-| Preflight and contradiction checks | PASS | Missing tests, no human handoff, orientation conflict |
-| Image-to-Video guidance | PASS | Start-frame/continuity/movement in final prompt |
-| Gemini API proxy + security constraints | PASS (mocked) | 9 Python unit tests: free-key BYOK, private access, missing/wrong credentials, invalid model/body and visual critique |
-| Desktop browser UX (1440×900) | PASS | Chromium + Playwright simulated document test; screenshot `tests/desktop.png` |
-| Mobile browser UX (390×844) | PASS | Chromium + Playwright simulated document test; screenshot `tests/phone.png` |
-| Beginner custom dropdowns | PASS | Browser test: select Other, type custom camera direction, verify in preview |
-| Image reference upload | PASS | Browser test: PNG preview, local file name and bounded image type/size |
-| Local prompt library | PASS (session) | Browser test: save, reopen, search UI |
-| API status GET | PASS | Local HTTP response (see check below) |
-| Real Gemini API key handshake | NOT RUN | Requires user-supplied API key |
-| Live Gemini output accuracy | NOT RUN | Requires user-supplied API key |
-| Deployed Vercel environment | NOT RUN | No cloud deployment requested or created |
-| Cross-session localStorage persistence | NOT FULLY E2E TESTED | Browser sandbox used opaque origin; JS storage paths reviewed; verify online |
-| Prior Supabase sync compatibility | NOT IMPLEMENTED | Standalone beta; cloud sync must be integrated before replacing old app |
+- `node tests/engine.test.mjs` — task classification, problem detective, safe repairs, generated prompt composition, token estimates, image-to-video requirements, twelve example scenarios.
+- `python -m unittest discover -s tests -q` — Gemini proxy request guards, server owner-key protection, image/video critique-only behavior, optimization goal instructions, Supabase vault sign-in validation, Fernet encryption round-trip, key deletion, no leakage in public config, modern Supabase secret key header rules, live-model-list filtering (mocked provider).
+- `python tests/browser_v12.py` — desktop 1440×900 and mobile 390×844, 4 prompt categories, model selectors for Claude/Midjourney/Hailuo, a Prompt Troubleshooter entry point, vault UI disabled gracefully when unconfigured, no uncaught frontend JavaScript errors. Tested using module injection in restricted Chromium because localhost navigation is blocked in this environment.
 
-## Test details
+## Not yet live tested
 
-Executed successfully:
+1. **Real Gemini API call** to a project model using your API key. Requires your own credentials; none were supplied to tests.
+2. **Persisted key across sessions with a real Supabase instance.** Automated tests mock Supabase and encryption. Real account signup, email verification, save/reload/reuse/delete must be checked after Vercel vault environment variables and SQL installation.
+3. **Vercel deployment on your account.** Package has been locally built, not pushed to your repository nor deployed to production/preview.
+4. **Current availability of external image/video apps by subscription and geography** — a provider version appearing on its website does not guarantee access via a particular account or API.
+5. **Actual image/video generation** — explicitly not part of this prompt-authoring beta. Gemini visual prompt test yields textual critique only.
+6. **Cloud sync of saved prompts** — still local-browser only. API key persistence uses the separate optional encrypted vault.
 
-- `node tests/engine.test.mjs`
-- `python -m unittest discover -s tests -v`
-- `python tests/browser_check.py`
+## Before beta goes public
 
-Browser test runner uses `page.set_content` + in-memory module injection because the automated browser in this environment blocks navigation to external and localhost URLs. It does exercise the real application JavaScript and responsive CSS. It cannot validate real cross-origin or deployed networking.
-
-## Security notes
-
-- API keys are never persisted in local prompt JSON, localStorage, or browser source files.
-- Server environment keys require an access code for hosted use. For local loopback development, server-level key testing is permitted.
-- Temporary user keys are transmitted to the same-origin proxy over HTTPS when deployed. Never enter keys on a site you don't control.
-- A personal preview access code is not multi-user authentication. Avoid public deployment until authentication, rate limits and abuse controls are added.
-- No automatic media upload, rendering or false claims of visual output.
-
-## Release decision
-
-**Ready for user-side local browser trial and personal API-key handshake. Not ready as a public commercial SaaS deployment.** Do not overwrite your old app/cloud library until remaining migration and live-API checks pass.
+Use a preview URL first. Configure Supabase account confirmation and redirect URLs; confirm a second account can never read the first user's saved credential. Protect Supabase `sb_secret_...`, Fernet and any server provider API key as server-side environment variables only. Add durable rate limits and misuse monitoring for large public usage, and periodically reverify model catalog entries. Ensure an operator can rotate credentials without losing access to old encrypted keys. Avoid sensitive real customer data with free API tiers. Review `/api/config`, `/api/vault` and `/api/models` in browser network tools to confirm no secret values are returned.
